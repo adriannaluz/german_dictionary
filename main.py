@@ -1,6 +1,6 @@
 import sqlite3 as sql
 import numpy as np
-
+from colorama import Fore, Style
 
 class VocabularyBox:
 
@@ -59,16 +59,16 @@ class VocabularyBox:
             word, p = self.get_word(tablename)
             conjugation = self.get_conjugation(word)
             conj_idx = np.random.choice(6)
-            solution = input("\nConjugate %s (%s): \t" % (word, self.get_col_names(tablename)[2:][conj_idx]))
-            if solution.lower() == "exit":
+            inp = input(f"\nKonjugiere {Fore.GREEN}%s{Style.RESET_ALL} ({Fore.RED}%s{Style.RESET_ALL}): \t" % (word, self.get_col_names(tablename)[2:][conj_idx]))
+            if inp.lower() == "exit":
                 return
-            success = solution == conjugation[conj_idx]
+            success = inp == conjugation[conj_idx]
             new_prob = self.drop * p if success else 1. / self.drop * p
             self.update_prob(tablename, word, new_prob)
             if success == 1:
-                print("That was correct")
+                print(f'{Fore.GREEN}\u2713{Style.RESET_ALL}')
             else:
-                print("The right conjugation is %s" % conjugation[conj_idx])
+                print(f'{Fore.RED}\u2717{Style.RESET_ALL}\t correct answer: {Fore.GREEN}%s{Style.RESET_ALL}' % conjugation[conj_idx])
             idx += 1
             if idx % 10 == 0:
                 inp = input("Want to continue? [Y/n]")
