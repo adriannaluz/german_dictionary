@@ -2,12 +2,12 @@ import sqlite3 as sql
 import numpy as np
 
 
+class VocabularyBox:
 
-class VocabularyClass:
-
-    def __init__(self, path='verbs.db'):
+    def __init__(self, path='verbs.db', drop=0.5):
         self.conn = sql.connect(path)
         self.cur = self.conn.cursor()
+        self.drop = drop
 
     def get_number_rows(self, tablename):
         return self.cur.execute("SELECT COUNT(*) FROM %s" % tablename).fetchone()[0]
@@ -53,27 +53,38 @@ class VocabularyClass:
         self.conn.commit()
 
     def start(self, tablename):
-        for i in range(3):
-        # while True:
+
+        idx = 0
+        while True:
             word, p = self.get_word(tablename)
             conjugation = self.get_conjugation(word)
-            idx = np.random.choice(6)
-            solution = input("\nConjugate %s (%s): \t" % (word, self.get_col_names(tablename)[2:][idx]))
-            success = solution == conjugation[idx]
-            new_prob = 0.5 * p if success else 2 * p
+            conj_idx = np.random.choice(6)
+            solution = input("\nConjugate %s (%s): \t" % (word, self.get_col_names(tablename)[2:][conj_idx]))
+            if solution.lower() == "exit":
+                return
+            success = solution == conjugation[conj_idx]
+            new_prob = self.drop * p if success else 1. / self.drop * p
             self.update_prob(tablename, word, new_prob)
             if success == 1:
                 print("That was correct")
             else:
-                print("The right conjugation is %s" % conjugation[idx])
+                print("The right conjugation is %s" % conjugation[conj_idx])
+            idx += 1
+            if idx % 10 == 0:
+                inp = input("Want to continue? [Y/n]")
+                if inp.lower() in ["n", "no"]:
+                    return
 
     def close(self):
         self.cur.close()
         self.conn.close()
 
 if __name__ == '__main__':
-    voc = VocabularyClass()
-    """print("get_table_names", voc.get_table_names())
+
+    voc = VocabularyBox()
+    voc.start("conjugation")
+    """
+    print("get_table_names", voc.get_table_names())
     print("get_number_rows", voc.get_number_rows("conjugation"))
     print("get_col_names", voc.get_col_names("conjugation"))
     print("get_col", voc.get_col("conjugation", "Infinitive_form"))
@@ -81,43 +92,6 @@ if __name__ == '__main__':
     print("get_conjugation", voc.get_conjugation("sein"))
     print("get_probabilities", voc.get_probabilities())
     print("Word to conjugate", voc.get_word("conjugation"))
-    print(voc.update_prob())"""
-    voc.start("conjugation")
+    print(voc.update_prob())
+    """
     voc.close()
-    """
-
-    rows = cur.fetchall()
-    num_rows = len(rows)
-    # print(num_rows)
-    # for row in rows:
-    #     print(row)
-
-    # for row in cur.execute('SELECT * FROM conjugation'):
-    #     print(row)
-
-    print("From which verb would you like to know the conjugation?")
-    conjugations = get_conjugation(cur, str(input()))
-
-    for i, conj in enumerate(conjugations):
-        if i == 0:
-            continue
-        form = col_names[i].split("_")
-        print("%s person %s = " %(form[0], form[1]) , conj)
-
-
-    for i, row in enumerate(rows):
-        print(rows[i][0])
-        #conjugations = get_conjugation(cur, str(input()))
-
-
-    # Prepare a list of records to be inserted
-
-    purchases = [(2,'John Paul','john.paul@xyz.com','B'),
-                 (3,'Chris Paul','john.paul@xyz.com','A'),
-                ]
-
-    # Use executemany() to insert multiple records at a time
-    cur.executemany('INSERT INTO consumers VALUES (?,?,?,?)', purchases)
-    for row in cur.execute('SELECT * FROM consumers'):
-        print(row)
-    """
